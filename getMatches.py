@@ -111,4 +111,6 @@ def main():
 
     print("\nData has been written to matches.json")
 
-main()
+
+if __name__ == "__main__":
+    main()
