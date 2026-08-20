@@ -70,11 +70,13 @@ def lookup_players(player_names):
     
 
 event_ids = [2551089]
-team_ids = ["Arsenal", "Chelsea", "Liverpool"]
+team_ids = ["New Zealand Rugby", "South Africa Rugby", "Argentina Rugby", "Japan Rugby", "Australia Rugby", "Canada Rugby", 
+            "USA Rugby", "Namibia Rugby", "Wales Rguby", "Barbarians", "Japan XV", "Māori All Blacks", "Ireland Rugby", "France Rugby", "Italy Rugby", "Scotland Rugby"]
 league_ids = [4328, 4329, 4330, 4331]
 player_names = ["Emma Raducanu", "Ronnie O'Sullivan", "Jack Draper"]
 
-team_names = ["McLaren Formula 1 Team", "Harlequins"]
+team_names = ["New Zealand Rugby", "South Africa Rugby", "Argentina Rugby", "Japan Rugby", "Australia Rugby", "Canada Rugby", 
+            "USA Rugby", "Namibia Rugby", "Wales Rugby", "Barbarians", "Japan XV", "Māori All Blacks", "Ireland Rugby", "France Rugby", "Italy Rugby", "Scotland Rugby"]
 
 
 #Got to do internationals 
@@ -87,5 +89,5 @@ team_names = ["McLaren Formula 1 Team", "Harlequins"]
 #lookup_events(event_ids)
 #lookup_teams(team_ids)
 #lookup_leagues(league_ids)
-#get_team_ids(team_names)
-lookup_players(player_names)
+get_team_ids(team_names)
+#lookup_players(player_names)

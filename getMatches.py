@@ -1,115 +1,146 @@
-
-# Need previous fixtures for all teams and athletes
-# Need upcoming fixtures for all teams and athletes 
-# Need league tables (Prem rug and F1)
-
-# TENNIS ATHLETES WILL HAVE TO BE DONE USING ESPN DB 
-
-import requests
 import json
+from pathlib import Path
 import time
+import requests
+
+JSONS_DIR = Path(__file__).resolve().parent / "jsons"
+JSONS_DIR.mkdir(exist_ok=True)
 
 
-def previousTeamResults(teamID):
-        url = f"https://www.thesportsdb.com/api/v1/json/3/eventslast.php?id={teamID}"
+def fetch_previous_team_results(team_id, team_name, retries=2):
+    """Fetches the last 5 completed matches for a given team ID."""
+    url = f"https://www.thesportsdb.com/api/v1/json/3/eventslast.php?id={team_id}"
+
+    for attempt in range(1, retries + 1):
         try:
-            res = requests.get(url, timeout=5)
+            res = requests.get(url, timeout=8)
             if res.status_code == 200 and res.text.strip():
-                return res.json().get("results") or []
-        except Exception:
-            print("Error")
-        return []
-    
-def previousMatches():
-    #opening file
-    with open("jsons/teams.json", "r") as f:
-        teamDict = json.load(f)
+                data = res.json()
+                return data.get("results") or []
+            elif res.status_code == 429:
+                print(
+                    f"  ⚠️ Rate limit (429) on {team_name}. Retrying"
+                )
+                time.sleep(100)
+        except requests.exceptions.RequestException as e:
+            print(f"  ❌ Network error on {team_name}: {e}")
+            time.sleep(1)
 
-    #Getting previous matches for all teams in the dictionary
-    previousMatches = []
-    for teamName, teamID in teamDict.items():
-        teamPreviousMatches = previousTeamResults(teamID)
-        previousMatches.extend(teamPreviousMatches)
-        time.sleep(1.5)  # Add a delay between requests to avoid overwhelming the API
+    return []
 
-    # 3. Deduplicate events (in case two favorited teams played each other)
-    uniquePreviousMatches = {m["idEvent"]: m for m in previousMatches if m.get("idEvent")}
 
-    #sorting by date
-    uniquePreviousMatches = list(uniquePreviousMatches.values())
-    uniquePreviousMatches.sort(key=lambda x: x.get("dateEvent", ""), reverse=True)
+def fetch_upcoming_team_results(team_id, team_name, retries=2):
+    """Fetches the next 5 scheduled matches for a given team ID."""
+    url = f"https://www.thesportsdb.com/api/v1/json/3/eventsnext.php?id={team_id}"
 
-    #Get the 10 most recent
-    tenPreviousMatches = uniquePreviousMatches[:10]
-
-    print(f"\n{'='*15} TOP 10 RECENT MATCHES {'='*15}\n")
-    return tenPreviousMatches
-    #for match in tenPreviousMatches:
-    #    date = match.get("dateEvent") 
-    #    hTeam = match.get("strHomeTeam")
-    #    aTeam = match.get("strAwayTeam")
-    #    hScore = match.get("intHomeScore")
-    #    aScore = match.get("intAwayScore")
-    #    league = match.get("strLeague")
-    #    print(f"{date} | {league} | {hTeam} {hScore} - {aScore} {aTeam}")
-       
-
-def upcomingTeamResults(teamID):
-        url = f"https://www.thesportsdb.com/api/v1/json/3/eventsnext.php?id={teamID}"
+    for attempt in range(1, retries + 1):
         try:
-            res = requests.get(url, timeout=5)
+            res = requests.get(url, timeout=8)
             if res.status_code == 200 and res.text.strip():
-                return res.json().get("events") or []
-        except Exception:
-            print("Error")
-        return []
+                data = res.json()
+                return data.get("events") or []
+            elif res.status_code == 429:
+                print(
+                    f"  ⚠️ Rate limit (429) on {team_name}. Retrying in 2s..."
+                )
+                time.sleep(2)
+        except requests.exceptions.RequestException as e:
+            print(f"  ❌ Network error on {team_name}: {e}")
+            time.sleep(1)
 
-def upcomingMatches():
-    #opening file
-        with open("jsons/teams.json", "r") as f:
-            teamDict = json.load(f)
-    
-        #Getting upcoming matches for all teams in the dictionary
-        upcomingMatches = []
-        for teamName, teamID in teamDict.items():
-            teamUpcomingMatches = upcomingTeamResults(teamID)
-            upcomingMatches.extend(teamUpcomingMatches)
-            time.sleep(1.5)  # Add a delay between requests to avoid overwhelming the API
-    
-        # 3. Deduplicate events (in case two favorited teams played each other)
-        uniqueUpcomingMatches = {m["idEvent"]: m for m in upcomingMatches if m.get("idEvent")}
-    
-        #sorting by date
-        uniqueUpcomingMatches = list(uniqueUpcomingMatches.values())
-        uniqueUpcomingMatches.sort(key=lambda x: x.get("dateEvent", ""), reverse=True)
-    
-        #Get the 10 most recent
-        tenUpcomingMatches = uniqueUpcomingMatches[:10]
-    
-        print(f"\n{'='*15} TOP 10 UPCOMING MATCHES {'='*15}\n")
-        return tenUpcomingMatches
-        #for match in tenUpcomingMatches:
-        #    date = match.get("dateEvent") 
-        #    hTeam = match.get("strHomeTeam")
-        #    aTeam = match.get("strAwayTeam")
-        #    hScore = match.get("intHomeScore")
-        #    aScore = match.get("intAwayScore")
-        #    league = match.get("strLeague")
-        #    print(f"{date} | {league} | {hTeam} {hScore} - {aScore} {aTeam}")
+    return []
+
+
+def get_all_previous_matches(team_dict):
+    all_results = []
+    print(f"\n--- Fetching Recent Matches for {len(team_dict)} Teams ---")
+
+    for i, (team_name, team_id) in enumerate(team_dict.items(), start=1):
+        matches = fetch_previous_team_results(team_id, team_name)
+        all_results.extend(matches)
+        print(f"[{i}/{len(team_dict)}] {team_name}: Found {len(matches)} past matches")
+        time.sleep(2)  # Delay between requests to avoid errors
+
+    # Deduplicate by idEvent
+    unique_matches = {m["idEvent"]: m for m in all_results if m.get("idEvent")}
+
+    # Sort descending: Most recent first
+    sorted_matches = sorted(
+        unique_matches.values(),
+        key=lambda x: x.get("dateEvent", ""),
+        reverse=True,
+    )
+
+    return sorted_matches[:10]
+
+
+def get_all_upcoming_matches(team_dict):
+    all_events = []
+    print(f"\n--- Fetching Upcoming Fixtures for {len(team_dict)} Teams ---")
+
+    for i, (team_name, team_id) in enumerate(team_dict.items(), start=1):
+        events = fetch_upcoming_team_results(team_id, team_name)
+        all_events.extend(events)
+        print(f"[{i}/{len(team_dict)}] {team_name}: Found {len(events)} upcoming fixtures")
+        time.sleep(2)
+
+    # Deduplicate by idEvent
+    unique_events = {m["idEvent"]: m for m in all_events if m.get("idEvent")}
+
+    # Sort ascending: Closest chronological fixture first
+    sorted_events = sorted(
+        unique_events.values(),
+        key=lambda x: x.get("dateEvent", ""),
+        reverse=False,
+    )
+
+    return sorted_events[:10] 
+
 
 def main():
-    prevMatches = previousMatches()
-    upMatches = upcomingMatches()
+    teams_file = JSONS_DIR / "teams.json"
+    matches_file = JSONS_DIR / "matches.json"
+
+    if not teams_file.exists():
+        print(f"Error: {teams_file} not found.")
+        return
+
+    with open(teams_file, "r", encoding="utf-8") as f:
+        team_dict = json.load(f)
+
+    # Load existing cache to protect against failed runs
+    cached_payload = {"Recent Matches": [], "Upcoming Matches": []}
+    if matches_file.exists():
+        try:
+            with open(matches_file, "r", encoding="utf-8") as f:
+                cached_payload = json.load(f)
+        except Exception:
+            pass
+
+    prev_matches = get_all_previous_matches(team_dict)
+    up_matches = get_all_upcoming_matches(team_dict)
+
+    # Guard: Fall back to existing cached data if a fetch returned 0 results due to network issues
+    final_prev = (
+        prev_matches
+        if prev_matches
+        else cached_payload.get("Recent Matches", [])
+    )
+    final_up = (
+        up_matches if up_matches else cached_payload.get("Upcoming Matches", [])
+    )
 
     payload = {
-        "Recent Matches": prevMatches,
-        "Upcoming Matches": upMatches
+        "Recent Matches": final_prev,
+        "Upcoming Matches": final_up,
     }
 
-    with open("jsons/matches.json", "w") as f:
+    with open(matches_file, "w", encoding="utf-8") as f:
         json.dump(payload, f, indent=2)
 
-    print("\nData has been written to matches.json")
+    print(
+        f"\n✅ Updated matches.json with {len(final_prev)} past and {len(final_up)} upcoming matches."
+    )
 
 
 if __name__ == "__main__":
