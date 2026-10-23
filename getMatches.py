@@ -9,7 +9,7 @@ JSONS_DIR.mkdir(exist_ok=True)
 
 def fetch_previous_team_results(team_id, team_name, retries=2):
     """Fetches the last 5 completed matches for a given team ID."""
-    url = f"https://www.thesportsdb.com/api/v1/json/3/eventslast.php?id={team_id}"
+    url = f"https://www.thesportsdb.com/api/v1/json/123/eventslast.php?id={team_id}"
 
     for attempt in range(1, retries + 1):
         try:
@@ -31,7 +31,7 @@ def fetch_previous_team_results(team_id, team_name, retries=2):
 
 def fetch_upcoming_team_results(team_id, team_name, retries=2):
     """Fetches the next 5 scheduled matches for a given team ID."""
-    url = f"https://www.thesportsdb.com/api/v1/json/3/eventsnext.php?id={team_id}"
+    url = f"https://www.thesportsdb.com/api/v1/json/123/eventsnext.php?id={team_id}"
 
     for attempt in range(1, retries + 1):
         try:
@@ -41,9 +41,9 @@ def fetch_upcoming_team_results(team_id, team_name, retries=2):
                 return data.get("events") or []
             elif res.status_code == 429:
                 print(
-                    f"  ⚠️ Rate limit (429) on {team_name}. Retrying in 2s..."
+                    f"  ⚠️ Rate limit (429) on {team_name}. Retrying"
                 )
-                time.sleep(2)
+                time.sleep(100)
         except requests.exceptions.RequestException as e:
             print(f"  ❌ Network error on {team_name}: {e}")
             time.sleep(1)

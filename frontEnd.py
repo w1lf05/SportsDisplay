@@ -362,15 +362,15 @@ def build_gui():
 
     #-- Tabs --
     homeTab(notebook)
-    matchesTab(notebook)
-    leaguesTab(notebook)
+    #matchesTab(notebook)
+    #leaguesTab(notebook)
 
     root.mainloop()
 
 
 if __name__ == "__main__":
     # 1. Execute updaters to refresh JSON files (uncomment when needed)
-    run_all_updates()
+    #run_all_updates()
 
     # 2. Read JSONs and open display window
     build_gui()
